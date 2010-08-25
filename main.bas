@@ -56,6 +56,7 @@ define led_mode LED1
 define led_rain LED2
 define led_wind LED3
 define led_wind_hz LED4
+define led_alive LED4
 
 ' Relais assignments
 define relais_window K1
@@ -81,6 +82,7 @@ define WINDOW_OPEN      1      ' Window is open
 define window_auto BIT[1]      ' Automatic window state
 define window_temp BIT[2]      ' Temporary window state
 define blink BIT[3]            ' Blink LED state
+define alive BIT[4]            ' Alive LED state
 
 define mode BYTE[2]            ' Application mode
 
@@ -232,7 +234,10 @@ goto main
     led_wind = sensor_wind
 
     ' Update wind hz led
-    if wind_freq > conf_wind_max then led_wind_hz = 1 else led_wind_hz = 0
+    'if wind_freq > conf_wind_max then led_wind_hz = 1 else led_wind_hz = 0
+
+    ' Update alive led
+    led_alive = alive
 
     ' Update window relais
     if mode = MODE_CLOSED then relais_window = 0
@@ -260,11 +265,13 @@ goto main
 ' This method is called once every second. It is responsible to update
 ' the internal states and switch the window.
 #update
+    ' toggle alive led
+    if alive then alive = 0 else alive = 1
     ' If it's raining, close the window immediately
     if sensor_rain then goto close_window
     ' If wind is too string, close the window immediately
     if sensor_wind then goto close_window
-    
+
     ' If wind is too strong, close the window immediately
     ' Currently disabled if wind_freq > conf_wind_max then goto close_window
 
@@ -274,7 +281,7 @@ goto main
     ' Close the window if inside temperature is too low
     if temp_in < conf_temp_min then window_temp = WINDOW_CLOSED
     ' Close the window if outside temperature is higher than inside temperature
-    if temp_out > temp_in then window_temp = WINDOW_CLOSED
+    'if temp_out > temp_in then window_temp = WINDOW_CLOSED
 
     ' Count seconds for which the temp window state is continuously the opposite of the current state
     if window_temp <> window_auto then window_stable = window_stable + 1 else window_stable = 0
